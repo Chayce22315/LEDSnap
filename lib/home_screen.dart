@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'led_display.dart';
@@ -16,8 +15,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late TabController _tabCtrl;
 
-  // ── Display state ─────────────────────────────────────────────────────────
-  final _textCtrl = TextEditingController(text: 'LEDSNAP 🔥 HELLO! 🌈');
+  // Display state
+  final _textCtrl = TextEditingController(text: 'LEDSNAP  HELLO! ');
   Color  _color      = const Color(0xFFFF2200);
   bool   _rainbow    = false;
   double _speed      = 55;
@@ -25,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool   _flash      = false;
   double _flashRate  = 3;
 
-  // ── Effect state ──────────────────────────────────────────────────────────
+  // Effect state
   String _effect      = 'none';
   double _waveAmp     = 4;
   double _waveSpeed   = 2.5;
@@ -37,20 +36,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   double _fireFlicker = 0.3;
   double _matrixSpd   = 2;
 
-  // ── In/Out state ──────────────────────────────────────────────────────────
+  // In/Out state
   String _inAnim    = 'none';
   String _outAnim   = 'none';
   double _zoneRatio = 0.15;
 
-  // ── Plus state ────────────────────────────────────────────────────────────
+  // Plus state
   bool   _plusOn   = false;
   String _dotShape = 'circle';
 
-  // ── Color helpers ─────────────────────────────────────────────────────────
   static Color _fromHex(String hex) {
     final h = hex.replaceFirst('#', '');
     return Color(int.parse('FF$h', radix: 16));
   }
+
   static String _toHex(Color c) =>
       '#${c.red.toRadixString(16).padLeft(2,'0')}${c.green.toRadixString(16).padLeft(2,'0')}${c.blue.toRadixString(16).padLeft(2,'0')}'.toUpperCase();
 
@@ -67,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // ── Export ────────────────────────────────────────────────────────────────
+  // Export .ledbanner
   Future<void> _export() async {
     final model = LEDBannerModel(
       text: _textCtrl.text, color: _toHex(_color), rainbow: _rainbow,
@@ -78,47 +77,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       name: _textCtrl.text.substring(0, _textCtrl.text.length.clamp(0, 16)),
     );
     final dir  = await getTemporaryDirectory();
-    final name = '${_textCtrl.text.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').substring(0, _textCtrl.text.length.clamp(0,16))}.ledbanner';
+    final safe = _textCtrl.text.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final name = '${safe.substring(0, safe.length.clamp(0, 16))}.ledbanner';
     final file = File('${dir.path}/$name');
     await file.writeAsString(model.toFileContent());
-    await Share.shareXFiles([XFile(file.path, mimeType: 'application/json')], subject: 'LEDSnap — $name');
+    await Share.shareXFiles(
+      [XFile(file.path, mimeType: 'application/json')],
+      subject: 'LEDSnap - $name',
+    );
   }
 
-  // ── Import ────────────────────────────────────────────────────────────────
+  // Import .ledbanner via share sheet
   Future<void> _import() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
-    if (result?.files.single.path == null) return;
-    try {
-      final content = await File(result!.files.single.path!).readAsString();
-      final m = LEDBannerModel.fromJson(jsonDecode(content) as Map<String, dynamic>);
-      setState(() {
-        _textCtrl.text = m.text;
-        _rainbow   = m.rainbow;
-        _color     = m.rainbow ? _color : _fromHex(m.color);
-        _sizeRatio = m.sizeRatio;
-        _speed     = m.speed;
-        _flash     = m.flash;
-        _flashRate = m.flashRate;
-        _effect    = m.effect;
-        _inAnim    = m.inAnim;
-        _outAnim   = m.outAnim;
-        _zoneRatio = m.zoneRatio;
-        _dotShape  = m.dotShape;
-        _waveAmp   = m.waveAmp;
-        _waveSpeed = m.waveSpeed;
-        _pulseRate = m.pulseRate;
-        _rippleSpeed = m.rippleSpeed;
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Invalid file: $e'), backgroundColor: Colors.red.shade900),
-        );
-      }
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Open a .ledbanner file and share it to LEDSnap to import.'),
+        backgroundColor: Color(0xFF1A1A1A),
+        duration: Duration(seconds: 4),
+      ),
+    );
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,12 +120,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── Header ────────────────────────────────────────────────────────────────
   Widget _buildHeader() {
     final isFit = _effect != 'none';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF161616)))),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFF161616))),
+      ),
       child: Row(children: [
         const Text('LED', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: 6, color: Color(0xFFFF2200), fontFamily: 'Courier')),
         const Text('SNAP', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w100, letterSpacing: 6, color: Color(0xFF3A3A3A))),
@@ -170,8 +150,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             border: Border.all(color: isFit ? const Color(0xFFFF2200) : const Color(0xFF1E1E1E)),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Text(isFit ? 'FIT' : 'SCROLL',
-            style: TextStyle(fontSize: 8, letterSpacing: 3, color: isFit ? const Color(0xFFFF2200) : const Color(0xFF333333))),
+          child: Text(
+            isFit ? 'FIT' : 'SCROLL',
+            style: TextStyle(fontSize: 8, letterSpacing: 3, color: isFit ? const Color(0xFFFF2200) : const Color(0xFF333333)),
+          ),
         ),
         const SizedBox(width: 8),
         const Text('v2.3', style: TextStyle(fontSize: 9, color: Color(0xFF252525), letterSpacing: 2)),
@@ -179,7 +161,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── LED Display ───────────────────────────────────────────────────────────
   Widget _buildDisplay() {
     return Container(
       color: const Color(0xFF020202),
@@ -209,10 +190,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ── Tab bar ───────────────────────────────────────────────────────────────
   Widget _buildTabBar() {
     return Container(
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF141414)))),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFF141414))),
+      ),
       child: TabBar(
         controller: _tabCtrl,
         labelStyle: const TextStyle(fontSize: 9, letterSpacing: 2, fontFamily: 'Courier'),
@@ -225,15 +207,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           Tab(text: 'DISPLAY'),
           Tab(text: 'EFFECT'),
           Tab(text: 'IN / OUT'),
-          Tab(text: '✦ PLUS'),
+          Tab(text: 'PLUS'),
         ],
       ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // DISPLAY TAB
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildDisplayTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -255,8 +234,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   opacity: _rainbow ? 0.25 : 1,
                   child: Container(
                     width: 32, height: 32,
-                    decoration: BoxDecoration(color: _color, borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: const Color(0xFF1E1E1E))),
+                    decoration: BoxDecoration(
+                      color: _color,
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: const Color(0xFF1E1E1E)),
+                    ),
                   ),
                 ),
               ),
@@ -269,7 +251,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             _label('Flash'),
             Row(children: [
               _pill('Blink', _flash, () => setState(() => _flash = !_flash)),
-              if (_flash) ...[const SizedBox(width: 8), Text('${_flashRate.round()}/s', style: const TextStyle(fontSize: 10, color: Color(0xFF555555)))],
+              if (_flash) ...[
+                const SizedBox(width: 8),
+                Text('${_flashRate.round()}/s', style: const TextStyle(fontSize: 10, color: Color(0xFF555555))),
+              ],
             ]),
             if (_flash) ...[
               const SizedBox(height: 8),
@@ -283,32 +268,29 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _sliderRow('Text Size', _sizeRatio * 100, 20, 100, '%', (v) => setState(() => _sizeRatio = v / 100)),
         const Divider(color: Color(0xFF111111), height: 32),
         Row(children: [
-          Expanded(child: _outlineBtn('↓ EXPORT .ledbanner', const Color(0xFFFF2200), _export)),
+          Expanded(child: _outlineBtn('EXPORT .ledbanner', const Color(0xFFFF2200), _export)),
           const SizedBox(width: 10),
-          Expanded(child: _outlineBtn('↑ IMPORT .ledbanner', const Color(0xFF333333), _import)),
+          Expanded(child: _outlineBtn('IMPORT .ledbanner', const Color(0xFF333333), _import)),
         ]),
       ]),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // EFFECT TAB
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildEffectTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: const Color(0xFF0D0D0D), border: Border.all(color: const Color(0xFF161616)), borderRadius: BorderRadius.circular(4)),
-          child: RichText(text: const TextSpan(style: TextStyle(fontSize: 9, letterSpacing: 1, color: Color(0xFF333333), height: 1.7),
-            children: [
-              TextSpan(text: 'Effects switch to '),
-              TextSpan(text: 'FIT mode', style: TextStyle(color: Color(0xFFFF2200))),
-              TextSpan(text: ' — dots shrink so all text fits on screen. Set to '),
-              TextSpan(text: 'None', style: TextStyle(color: Color(0xFFFF2200))),
-              TextSpan(text: ' to scroll.'),
-            ])),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0D0D0D),
+            border: Border.all(color: const Color(0xFF161616)),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: const Text(
+            'Effects switch to FIT mode - dots shrink so all text fits on screen. Set to None to scroll.',
+            style: TextStyle(fontSize: 9, letterSpacing: 1, color: Color(0xFF444444), height: 1.7),
+          ),
         ),
         const SizedBox(height: 16),
         _label('LED Effect'),
@@ -317,10 +299,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           _pill('Wave',   _effect == 'wave',   () => setState(() => _effect = 'wave')),
           _pill('Pulse',  _effect == 'pulse',  () => setState(() => _effect = 'pulse')),
           _pill('Ripple', _effect == 'ripple', () => setState(() => _effect = 'ripple')),
-          _lockedOrPill('Glitch',  _effect == 'glitch',  () => setState(() => _effect = 'glitch')),
-          _lockedOrPill('Fire',    _effect == 'fire',     () => setState(() => _effect = 'fire')),
-          _lockedOrPill('Bounce',  _effect == 'bounce',   () => setState(() => _effect = 'bounce')),
-          _lockedOrPill('Matrix',  _effect == 'matrix',   () => setState(() => _effect = 'matrix')),
+          _lockedOrPill('Glitch', _effect == 'glitch', () => setState(() => _effect = 'glitch')),
+          _lockedOrPill('Fire',   _effect == 'fire',   () => setState(() => _effect = 'fire')),
+          _lockedOrPill('Bounce', _effect == 'bounce', () => setState(() => _effect = 'bounce')),
+          _lockedOrPill('Matrix', _effect == 'matrix', () => setState(() => _effect = 'matrix')),
         ]),
         const SizedBox(height: 16),
         if (_effect == 'wave') ...[
@@ -347,9 +329,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // IN/OUT TAB
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildInOutTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -377,9 +356,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // PLUS TAB
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _buildPlusTab() {
     if (!_plusOn) {
       return Center(
@@ -388,25 +364,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Text('LEDSNAP+', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 6, color: Color(0xFFF5C842))),
             const SizedBox(height: 8),
-            const Text('Unlock pro features for arcade-grade\nLED experiences.',
+            const Text(
+              'Unlock pro features for arcade-grade LED experiences.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 10, color: Color(0xFF555555), letterSpacing: 2, height: 1.8)),
+              style: TextStyle(fontSize: 10, color: Color(0xFF555555), letterSpacing: 2, height: 1.8),
+            ),
             const SizedBox(height: 16),
-            ...['Glitch, Fire, Bounce & Matrix effects', 'Slide, Zoom & Typewriter in/out',
-              'Dot shapes — Square, Diamond, Rounded'].map((f) =>
-              Padding(padding: const EdgeInsets.symmetric(vertical: 3),
+            ...['Glitch, Fire, Bounce & Matrix effects', 'Slide, Zoom & Typewriter in/out', 'Dot shapes - Square, Diamond, Rounded'].map((f) =>
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Text('✦ ', style: TextStyle(color: Color(0xFFF5C842))),
+                  const Text('+ ', style: TextStyle(color: Color(0xFFF5C842))),
                   Text(f, style: const TextStyle(fontSize: 10, color: Color(0xFF555555), letterSpacing: 1)),
-                ]))),
+                ]),
+              )),
             const SizedBox(height: 24),
             GestureDetector(
               onTap: () => setState(() => _plusOn = true),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                decoration: BoxDecoration(border: Border.all(color: const Color(0xFFF5C842)), borderRadius: BorderRadius.circular(4)),
-                child: const Text('UNLOCK PLUS — FREE DEMO',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 3, color: Color(0xFFF5C842))),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFF5C842)),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'UNLOCK PLUS - FREE DEMO',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 3, color: Color(0xFFF5C842)),
+                ),
               ),
             ),
           ]),
@@ -419,8 +403,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _label('Dot Shape'),
         GridView.count(
-          shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 4, mainAxisSpacing: 8, crossAxisSpacing: 8,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 4,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
           children: [
             _shapeCard('circle',  'Circle',  Icons.circle),
             _shapeCard('square',  'Square',  Icons.square),
@@ -446,15 +433,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(icon, color: active ? const Color(0xFFF5C842) : const Color(0xFF333333), size: 20),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 8, letterSpacing: 1, color: active ? const Color(0xFFF5C842) : const Color(0xFF444444))),
+          Text(label, style: TextStyle(fontSize: 8, letterSpacing: 1,
+            color: active ? const Color(0xFFF5C842) : const Color(0xFF444444))),
         ]),
       ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Color picker sheet
-  // ─────────────────────────────────────────────────────────────────────────
   void _showColorPicker() {
     const colors = [
       Color(0xFFFF2200), Color(0xFFFF6600), Color(0xFFFFCC00),
@@ -468,12 +453,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         padding: const EdgeInsets.all(24),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           _label('Pick Color'),
-          Wrap(spacing: 12, runSpacing: 12,
+          Wrap(
+            spacing: 12, runSpacing: 12,
             children: colors.map((c) => GestureDetector(
               onTap: () { setState(() => _color = c); Navigator.pop(context); },
-              child: Container(width: 44, height: 44,
-                decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _color == c ? Colors.white : Colors.transparent, width: 2)),
+              child: Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: c,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _color == c ? Colors.white : Colors.transparent, width: 2),
+                ),
               ),
             )).toList(),
           ),
@@ -483,9 +473,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Helpers
-  // ─────────────────────────────────────────────────────────────────────────
   Widget _label(String t) => Padding(
     padding: const EdgeInsets.only(bottom: 9),
     child: Text(t.toUpperCase(), style: const TextStyle(fontSize: 9, letterSpacing: 3, color: Color(0xFF3A3A3A))),
@@ -500,29 +487,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: active ? const Color(0xFFFF2200) : const Color(0xFF1C1C1C)),
-          gradient: gradient && active ? const LinearGradient(colors: [Colors.red, Colors.orange, Colors.yellow, Colors.green, Colors.cyan, Colors.blue, Colors.purple]) : null,
+          gradient: gradient && active
+              ? const LinearGradient(colors: [Colors.red, Colors.orange, Colors.yellow, Colors.green, Colors.cyan, Colors.blue, Colors.purple])
+              : null,
           color: gradient && active ? null : active ? const Color(0xFF1A0500) : const Color(0xFF0C0C0C),
         ),
-        child: Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 2,
-          color: gradient && active ? Colors.black : active ? const Color(0xFFFF2200) : const Color(0xFF3A3A3A))),
+        child: Text(label, style: TextStyle(
+          fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 2,
+          color: gradient && active ? Colors.black : active ? const Color(0xFFFF2200) : const Color(0xFF3A3A3A),
+        )),
       ),
     );
   }
 
   Widget _lockedOrPill(String label, bool active, VoidCallback onTap) {
     if (!_plusOn) {
-      return Opacity(opacity: 0.35, child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1C1C1C)), color: const Color(0xFF0C0C0C)),
-        child: Text('$label ✦', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 2, color: Color(0xFF3A3A3A))),
-      ));
+      return Opacity(
+        opacity: 0.35,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF1C1C1C)),
+            color: const Color(0xFF0C0C0C),
+          ),
+          child: Text('$label +', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 2, color: Color(0xFF3A3A3A))),
+        ),
+      );
     }
     return _pill(label, active, onTap);
   }
 
   Widget _slider(double val, double min, double max, ValueChanged<double> onChange) =>
     SliderTheme(
-      data: SliderThemeData(trackHeight: 2, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6)),
+      data: const SliderThemeData(trackHeight: 2, thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6)),
       child: Slider(value: val, min: min, max: max, onChanged: onChange),
     );
 
@@ -530,17 +528,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text(label.toUpperCase(), style: const TextStyle(fontSize: 9, letterSpacing: 3, color: Color(0xFF3A3A3A))),
-        Text('${val.toStringAsFixed(val < 10 ? 1 : 0)}$unit',
-          style: const TextStyle(fontSize: 11, color: Color(0xFF555555))),
+        Text('${val.toStringAsFixed(val < 10 ? 1 : 0)}$unit', style: const TextStyle(fontSize: 11, color: Color(0xFF555555))),
       ]),
       SliderTheme(
         data: SliderThemeData(
           trackHeight: 2,
-          activeTrackColor: gold ? const Color(0xFFF5C842) : const Color(0xFFFF2200),
-          thumbColor:       gold ? const Color(0xFFF5C842) : const Color(0xFFFF2200),
+          activeTrackColor:   gold ? const Color(0xFFF5C842) : const Color(0xFFFF2200),
+          thumbColor:         gold ? const Color(0xFFF5C842) : const Color(0xFFFF2200),
           inactiveTrackColor: const Color(0xFF181818),
-          overlayColor: (gold ? const Color(0xFFF5C842) : const Color(0xFFFF2200)).withAlpha(40),
-          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+          overlayColor:       (gold ? const Color(0xFFF5C842) : const Color(0xFFFF2200)).withAlpha(40),
+          thumbShape:         const RoundSliderThumbShape(enabledThumbRadius: 6),
         ),
         child: Slider(value: val.clamp(min, max), min: min, max: max, onChanged: onChange),
       ),
@@ -552,7 +549,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 11),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), border: Border.all(color: color), color: const Color(0xFF0D0D0D)),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: color),
+          color: const Color(0xFF0D0D0D),
+        ),
         alignment: Alignment.center,
         child: Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 2, color: color, fontFamily: 'Courier')),
       ),
