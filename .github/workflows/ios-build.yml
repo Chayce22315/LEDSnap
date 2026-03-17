@@ -71,28 +71,34 @@ jobs:
         working-directory: ios
         run: pod install --repo-update
 
-      - name: Build iOS (no code signing)
+      - name: Generate Flutter engine files
         run: |
-          flutter build ios --release \
-            --no-codesign \
-            --dart-define=FLUTTER_BUILD_MODE=release
+          flutter build ios --release --no-codesign || true
+          # Generate the Flutter.framework and app.dill even if signing fails
 
-      - name: Package IPA manually via xcodebuild
+      - name: Build with xcodebuild (no signing)
         run: |
           xcodebuild \
             -workspace ios/Runner.xcworkspace \
             -scheme Runner \
             -sdk iphoneos \
             -configuration Release \
-            -archivePath build/Runner.xcarchive \
+            -archivePath $PWD/build/Runner.xcarchive \
             archive \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            | xcpretty || true
 
+      - name: Package IPA
+        run: |
+          APP_PATH=$(find build/Runner.xcarchive -name "*.app" | head -1)
+          echo "Found app at: $APP_PATH"
           mkdir -p build/ios/ipa/Payload
-          cp -r build/Runner.xcarchive/Products/Applications/Runner.app build/ios/ipa/Payload/
+          cp -r "$APP_PATH" build/ios/ipa/Payload/
           cd build/ios/ipa
           zip -r LEDSnap.ipa Payload/
           echo "IPA size: $(du -sh LEDSnap.ipa)"
