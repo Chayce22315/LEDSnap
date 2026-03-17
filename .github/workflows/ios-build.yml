@@ -60,6 +60,35 @@ jobs:
           *.iml
           GITIGNORE
 
+          cat > ios/Flutter/AppFrameworkInfo.plist << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleDevelopmentRegion</key>
+            <string>en</string>
+            <key>CFBundleExecutable</key>
+            <string>App</string>
+            <key>CFBundleIdentifier</key>
+            <string>io.flutter.flutter.app</string>
+            <key>CFBundleInfoDictionaryVersion</key>
+            <string>6.0</string>
+            <key>CFBundleName</key>
+            <string>App</string>
+            <key>CFBundlePackageType</key>
+            <string>FMWK</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0</string>
+            <key>CFBundleSignature</key>
+            <string>????</string>
+            <key>CFBundleVersion</key>
+            <string>1.0</string>
+            <key>MinimumOSVersion</key>
+            <string>14.0</string>
+          </dict>
+          </plist>
+          PLIST
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
@@ -94,10 +123,10 @@ jobs:
 
       - name: Package IPA
         run: |
-          APP=$(find build/derived -name "Runner.app" -not -path "*/simulator/*" | head -1)
+          APP=$(find build/derived -name "LEDSnap.app" -not -path "*/simulator/*" | head -1)
           echo "Found: $APP"
           mkdir -p build/ios/ipa/Payload
-          cp -r "$APP" build/ios/ipa/Payload/Runner.app
+          cp -r "$APP" build/ios/ipa/Payload/LEDSnap.app
           cd build/ios/ipa
           zip -r LEDSnap.ipa Payload/
           echo "Done: $(du -sh LEDSnap.ipa)"
