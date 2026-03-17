@@ -17,6 +17,13 @@ settings:
     ENABLE_BITCODE: NO
     SWIFT_VERSION: 5.0
     TARGETED_DEVICE_FAMILY: "1,2"
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGN_IDENTITY: ""
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    PROVISIONING_PROFILE: ""
+    PROVISIONING_PROFILE_SPECIFIER: ""
 
 targets:
   Runner:
@@ -40,9 +47,13 @@ targets:
         INFOPLIST_FILE: Runner/Info.plist
         LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/Frameworks
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        CODE_SIGN_STYLE: Manual
         CODE_SIGNING_REQUIRED: NO
         CODE_SIGNING_ALLOWED: NO
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+        PROVISIONING_PROFILE: ""
+        PROVISIONING_PROFILE_SPECIFIER: ""
     preBuildScripts:
       - name: Run Flutter Build Script
         basedOnDependencyAnalysis: false
@@ -50,7 +61,7 @@ targets:
         script: |
           /bin/sh "$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh" build
     postBuildScripts:
-      - name: Embed & Thin
+      - name: Embed and Thin
         basedOnDependencyAnalysis: false
         script: |
           /bin/sh "$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh" embed_and_thin
