@@ -22,6 +22,24 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
+      - name: Write AppDelegate.swift (clean UTF-8)
+        run: |
+          cat > ios/Runner/AppDelegate.swift << 'SWIFT'
+          import UIKit
+          import Flutter
+
+          @UIApplicationMain
+          @objc class AppDelegate: FlutterAppDelegate {
+            override func application(
+              _ application: UIApplication,
+              didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+            ) -> Bool {
+              GeneratedPluginRegistrant.register(with: self)
+              return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+            }
+          }
+          SWIFT
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
@@ -42,8 +60,7 @@ jobs:
           cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa
           zip -r LEDSnap.ipa Payload/
-          echo "IPA built successfully"
-          ls -lh LEDSnap.ipa
+          echo "IPA built at $(du -sh LEDSnap.ipa)"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
