@@ -22,7 +22,7 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Write AppDelegate.swift (clean UTF-8)
+      - name: Write clean UTF-8 files
         run: |
           cat > ios/Runner/AppDelegate.swift << 'SWIFT'
           import UIKit
@@ -39,6 +39,26 @@ jobs:
             }
           }
           SWIFT
+
+          cat > .gitignore << 'GITIGNORE'
+          .dart_tool/
+          .flutter-plugins
+          .flutter-plugins-dependencies
+          .packages
+          .pub-cache/
+          .pub/
+          build/
+          ios/Runner.xcodeproj/
+          ios/Runner.xcworkspace/
+          ios/Flutter/Generated.xcconfig
+          ios/Flutter/flutter_export_environment.sh
+          ios/Pods/
+          ios/Podfile.lock
+          .DS_Store
+          .idea/
+          .vscode/
+          *.iml
+          GITIGNORE
 
       - name: Install XcodeGen
         run: brew install xcodegen
