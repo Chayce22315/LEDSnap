@@ -22,7 +22,7 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Write clean UTF-8 files
+      - name: Write clean files
         run: |
           cat > ios/Runner/AppDelegate.swift << 'SWIFT'
           import UIKit
@@ -71,16 +71,33 @@ jobs:
         working-directory: ios
         run: pod install --repo-update
 
-      - name: Build iOS release (no codesign)
+      - name: Build app with xcodebuild (no signing)
         run: |
-          flutter build ios \
-            --release \
-            --no-codesign
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build/derived \
+            FLUTTER_ROOT=$FLUTTER_ROOT \
+            FLUTTER_APPLICATION_PATH=$PWD \
+            FLUTTER_BUILD_DIR=build \
+            FLUTTER_BUILD_MODE=release \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            build
 
       - name: Package IPA
         run: |
+          APP=$(find build/derived -name "Runner.app" -not -path "*/simulator/*" | head -1)
+          echo "Found: $APP"
           mkdir -p build/ios/ipa/Payload
-          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
+          cp -r "$APP" build/ios/ipa/Payload/Runner.app
           cd build/ios/ipa
           zip -r LEDSnap.ipa Payload/
           echo "Done: $(du -sh LEDSnap.ipa)"
