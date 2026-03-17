@@ -1,0 +1,56 @@
+name: Runner
+
+options:
+  bundleIdPrefix: com.ledsnap
+  deploymentTarget:
+    iOS: "14.0"
+  createIntermediateGroups: true
+  xcodeVersion: "15"
+
+configs:
+  Debug: debug
+  Profile: release
+  Release: release
+
+settings:
+  base:
+    ENABLE_BITCODE: NO
+    SWIFT_VERSION: 5.0
+    TARGETED_DEVICE_FAMILY: "1,2"
+
+targets:
+  Runner:
+    type: application
+    platform: iOS
+    deploymentTarget: "14.0"
+    sources:
+      - Runner
+    info:
+      path: Runner/Info.plist
+    configFiles:
+      Debug:   Flutter/Debug.xcconfig
+      Profile: Flutter/Release.xcconfig
+      Release: Flutter/Release.xcconfig
+    settings:
+      base:
+        PRODUCT_NAME: LEDSnap
+        PRODUCT_BUNDLE_IDENTIFIER: com.ledsnap.app
+        MARKETING_VERSION: 1.0.0
+        CURRENT_PROJECT_VERSION: 1
+        INFOPLIST_FILE: Runner/Info.plist
+        LD_RUNPATH_SEARCH_PATHS: $(inherited) @executable_path/Frameworks
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: NO
+    preBuildScripts:
+      - name: Run Flutter Build Script
+        basedOnDependencyAnalysis: false
+        showEnvVarsInLog: true
+        script: |
+          /bin/sh "$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh" build
+    postBuildScripts:
+      - name: Embed & Thin
+        basedOnDependencyAnalysis: false
+        script: |
+          /bin/sh "$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh" embed_and_thin
