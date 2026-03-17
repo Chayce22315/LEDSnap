@@ -89,6 +89,19 @@ jobs:
           </plist>
           PLIST
 
+          cat > ios/Runner/GeneratedPluginRegistrant.swift << 'GPRS'
+          //
+          //  Generated file. Do not edit.
+          //
+
+          import Flutter
+          import UIKit
+
+          func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+            SharePlusPlatformPlugin.register(with: registry.registrar(forPlugin: "SharePlusPlatformPlugin"))
+          }
+          GPRS
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
